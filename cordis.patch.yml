@@ -1,0 +1,17 @@
+# The dsh-matrix-theme plugin patch: one insert adding the Matrix theme
+# browser row to a browser-surface profile. The row mounts THIS package, so
+# the profile's node resolution finds it without any other install step.
+#
+# The insert form appends; it does not dedupe. A profile whose layers already
+# register `ui-matrix-theme` (the stock dsh-web-app bundle from the release
+# that shipped the theme onward) fails the load with `duplicate loader entry
+# id: ui-matrix-theme` — such profiles already have the theme in-box and must
+# not add this plugin. The plugin also requires the client stack that declares
+# the `shell.backdrop` slot, which is the same release.
+#
+# The row is a `dsh.client` roster entry the browser roster scanner turns into
+# window.__DSH_BOOT__; the browser half ships prebuilt in lib/client.js.
+
+- insert:
+    - id: ui-matrix-theme
+      name: 'dsh-matrix-theme'

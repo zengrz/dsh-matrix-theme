@@ -1,0 +1,48 @@
+{
+  "name": "dsh-matrix-theme",
+  "description": "The Matrix movie theme for the dsh web GUI as an installable plugin: the selectable 'matrix' theme (green-on-black palette), a digital-rain ambient backdrop, and its General-settings toggle",
+  "version": "0.1.1",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "src"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-theme",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^0.1.0",
+    "@deepseek-ai/dsh-client-locale": "^0.1.0",
+    "@deepseek-ai/dsh-client-runtime": "^0.1.0",
+    "@deepseek-ai/dsh-client-ui-layout": "^0.1.0",
+    "@deepseek-ai/dsh-client-ui-settings": "^0.1.0",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.1.0",
+    "@deepseek-ai/dsh-client-ui-theme": "^0.1.0",
+    "@deepseek-ai/dsh-invariants": "^0.1.0",
+    "react": "^18.0.0"
+  }
+}

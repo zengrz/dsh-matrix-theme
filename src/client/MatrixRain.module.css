@@ -1,0 +1,23 @@
+/* The rain entry fills the shell backdrop layer and stays click-through
+ * (it paints behind every column, so pointer handling stays with the app).
+ * The canvas follows its box with no stretch; the veil stacks above the
+ * canvas and below the columns as the translucent separation layer. */
+
+.layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}

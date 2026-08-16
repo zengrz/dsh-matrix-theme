@@ -1,0 +1,53 @@
+/* Matrix theme row (mirrors the Appearance row chrome: title + control,
+ * pad 16/0, hairline separator; the section column strips it when last). */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--dsw-alias-border-l2);
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+}
+
+/* Switch toggle: label-bearing track with a sliding knob, 48x24 r12. */
+.toggle {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+
+/* Knob: 16x16 pill, left (off) by default. */
+.knob {
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--dsw-alias-label-secondary);
+  transition: background var(--ds-transition-duration-slow) var(--ds-ease-in-out);
+}
+
+/* On: the knob recolors; the state label carries the selected meaning. */
+.toggle.on .knob {
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.toggle:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
