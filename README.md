@@ -2,6 +2,8 @@
 
 The Matrix movie theme for the [dsh](https://github.com/deepseek-ai/deepseek-harness) web GUI as an installable plugin: the selectable `matrix` theme (green-on-black palette over the dark base), a digital-rain ambient backdrop (a faithful port of the [zengrz.github.io](https://github.com/zengrz/zengrz.github.io) glyph wall), and its General-settings toggle row. One package carries both roles: the `dsh.bundle` patch layer (`cordis.patch.yml` inserts the `ui-matrix-theme` browser roster row) and the `dsh.client` plugin itself (`lib/client.js`, prebuilt and committed — no build step runs at install time).
 
+![The Matrix theme active in the dsh web GUI](assets/screenshot.png)
+
 ## Install
 
 ```sh
