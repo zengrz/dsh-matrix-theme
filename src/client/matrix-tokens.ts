@@ -10,11 +10,11 @@
  * palette while the theme is active. Values are literal colors, repeated
  * through the named constants below rather than re-declared per alias.
  *
- * The base background is translucent: it is the layer between the app
- * content and the `shell.backdrop` entries behind the columns, letting the
- * ambient backdrop (the digital rain) read through at reduced strength while
- * text stays opaque on top. The sidebar fill stays solid instead, so its
- * controls sit on a readable surface rather than on the animated backdrop.
+ * The base background is transparent: the ambient backdrop (the digital
+ * rain) renders behind the app shell, and the frame's transparent base lets
+ * it show through at full strength. The sidebar fill stays solid instead,
+ * so its controls sit on a readable surface rather than on the animated
+ * backdrop.
  */
 import type { ThemeDefinition } from '@deepseek-ai/dsh-client-ui-theme/client'
 
@@ -43,8 +43,8 @@ const BG_1 = 'rgb(0, 13, 4)'
 const BG_2 = 'rgb(0, 20, 7)'
 const BG_3 = 'rgb(0, 27, 9)'
 const BG_4 = 'rgb(0, 33, 12)'
-/** Translucent base surface: the layer over `shell.backdrop` entries. */
-const BG_BASE_VEILED = 'rgba(0, 0, 0, 0.75)'
+/** Transparent base surface: lets the ambient backdrop show through at full strength. */
+const BG_BASE = 'transparent'
 /** Error pair (kept red: the only hue the matrix palette does not reclaim). */
 const ERROR = 'rgb(255, 82, 82)'
 const ERROR_BRIGHT = 'rgb(255, 130, 130)'
@@ -63,8 +63,8 @@ export const MATRIX_THEME: ThemeDefinition = {
   id: THEME_ID,
   colorScheme: 'dark',
   tokens: {
-    // Base surfaces (translucent: the layer over the backdrop).
-    '--dsw-alias-bg-base': BG_BASE_VEILED,
+    // Base surfaces (transparent: the ambient backdrop shows through).
+    '--dsw-alias-bg-base': BG_BASE,
     '--dsw-alias-bg-layer-1': BG_1,
     '--dsw-alias-bg-layer-2': BG_2,
     '--dsw-alias-bg-layer-3': BG_3,
