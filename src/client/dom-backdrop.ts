@@ -40,7 +40,7 @@ export function mountDomBackdrop(ctx: ClientContext): () => void {
   const veil = document.createElement('div')
   veil.setAttribute('aria-hidden', 'true')
   // Same veil opacity as the slot-based MatrixRain (MatrixRain.module.css .veil).
-  veil.style.cssText = 'position:absolute;inset:0;background:#0000008c'
+  veil.style.cssText = 'position:absolute;inset:0;background:#00000080'
 
   layer.append(canvas, veil)
   document.body.prepend(layer)
