@@ -24,7 +24,7 @@ import { createMatrixThemeStore } from './store.ts'
 import type { MatrixRowInjected } from './MatrixRow.tsx'
 import { MatrixRow } from './MatrixRow.tsx'
 import { MatrixRain } from './MatrixRain.tsx'
-import { mountDomBackdrop } from './dom-backdrop.ts'
+import { mountDomBackdrop, notifyOpacityChange } from './dom-backdrop.ts'
 import { en, zh, type MatrixKey } from './locales.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -87,6 +87,11 @@ export function apply(ctx: ClientContext): void {
         } else {
           ctx.theme.setTheme(restoreTo ?? 'system')
         }
+      },
+      setOpacity: (opacity) => {
+        actions.setOpacity(opacity)
+        // Notify the DOM fallback (non-React path) to update its veil.
+        notifyOpacityChange()
       },
     }
   }

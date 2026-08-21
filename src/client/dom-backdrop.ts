@@ -8,7 +8,9 @@
  *
  * The layer mirrors the slot-based MatrixRain's structure (canvas + translucent
  * veil) and reuses the same engine, the same `prefers-reduced-motion` gate, and
- * the same theme-active condition. The disposer removes the layer, the
+ * the same theme-active condition. The veil opacity is read from localStorage
+ * (the store's persistence key) and updated on `storage` / custom events so the
+ * slider stays live on this path too. The disposer removes the layer, the
  * promoted-<style> tag, and the engine; the caller (the plugin's apply
  * closure) runs it from a `setTimeout(0)` that fires after synchronous boot so
  * ui-layout has already declared its slots (or not) by the time the check runs.
@@ -18,12 +20,27 @@ import { THEME_ID } from './matrix-tokens.ts'
 import { RainEngine } from './rain-engine.ts'
 import { prefersReducedMotion } from './MatrixRain.tsx'
 
+/** localStorage key (must match store.ts). */
+const OPACITY_STORAGE_KEY = 'dsh-matrix-theme.veil-opacity'
+/** Custom event the store dispatches on opacity write (for same-tab updates). */
+const OPACITY_EVENT = 'dsh-matrix-theme:opacity'
+
+/** Read the persisted opacity, clamped to [0, 1]; default 0.5. */
+function readOpacity(): number {
+  if (typeof localStorage === 'undefined') return 0.5
+  const raw = localStorage.getItem(OPACITY_STORAGE_KEY)
+  if (raw === null) return 0.5
+  const v = Number.parseFloat(raw)
+  return Number.isNaN(v) ? 0.5 : Math.max(0, Math.min(1, v))
+}
+
 /**
  * Mount a fixed-position canvas behind the app root, driving the same
  * RainEngine as the slot-based MatrixRain. The layer is click-through and
  * sits at z-index 0; a companion <style> promotes `#root` to z-index 1 so
- * the rain stays behind every column. The disposer removes all three
- * (layer, style, engine) and stops the rAF loop.
+ * the rain stays behind every column. The veil opacity follows the
+ * persisted value (and live-updates from the settings slider). The disposer
+ * removes all three (layer, style, engine) and stops the rAF loop.
  * @param ctx - client root context (for theme snapshots).
  * @returns disposer that tears down the layer and the engine.
  */
@@ -39,8 +56,8 @@ export function mountDomBackdrop(ctx: ClientContext): () => void {
 
   const veil = document.createElement('div')
   veil.setAttribute('aria-hidden', 'true')
-  // Same veil opacity as the slot-based MatrixRain (MatrixRain.module.css .veil).
-  veil.style.cssText = 'position:absolute;inset:0;background:#00000080'
+  veil.style.cssText = 'position:absolute;inset:0'
+  veil.style.backgroundColor = `rgba(0, 0, 0, ${readOpacity()})`
 
   layer.append(canvas, veil)
   document.body.prepend(layer)
@@ -52,6 +69,12 @@ export function mountDomBackdrop(ctx: ClientContext): () => void {
   document.head.append(promoted)
 
   let engine: RainEngine | null = null
+
+  // Live-update the veil opacity when the slider moves (same tab via custom
+  // event, cross-tab via storage event).
+  const onOpacity = (): void => { veil.style.backgroundColor = `rgba(0, 0, 0, ${readOpacity()})` }
+  window.addEventListener(OPACITY_EVENT, onOpacity)
+  window.addEventListener('storage', onOpacity)
 
   const sync = (): void => {
     const active = ctx.theme.getTheme().active.id === THEME_ID
@@ -71,9 +94,16 @@ export function mountDomBackdrop(ctx: ClientContext): () => void {
 
   return () => {
     window.removeEventListener('resize', onResize)
+    window.removeEventListener(OPACITY_EVENT, onOpacity)
+    window.removeEventListener('storage', onOpacity)
     offTheme()
     engine?.dispose()
     layer.remove()
     promoted.remove()
   }
+}
+
+/** Dispatch the custom event so the DOM fallback updates its veil on slider change. */
+export function notifyOpacityChange(): void {
+  window.dispatchEvent(new Event(OPACITY_EVENT))
 }
