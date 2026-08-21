@@ -20,7 +20,8 @@ No build permission (`allowBuilds`) is needed: the published entry points are co
 
 ## Requirements and compatibility
 
-- The profile must be a browser-surface composition whose client stack declares the `shell.backdrop` slot (ui-layout from the dsh release that introduced the ambient backdrop slot).
+- On a harness that declares the `shell.backdrop` slot (ui-layout from the dsh release that introduced the ambient backdrop slot), the rain renders inside the frame's backdrop layer — below every column, click-through, and managed by the slot system.
+- On a harness that **predates** the `shell.backdrop` slot (e.g. dsh `0.1.0-rc.8`), the plugin detects the missing slot at boot and falls back to a fixed-position DOM canvas behind the app root, driving the same `RainEngine`. The palette and the General-settings toggle work identically on both paths; only the backdrop's mount site differs. The fallback retires itself if the slot is later declared (e.g. a harness upgrade mid-session via HMR).
 - The patch **appends and does not dedupe**: adding this plugin to a profile whose layers already register `ui-matrix-theme` — the stock `dsh-web-app` bundle ships the theme in-box from the same release — fails the load with `duplicate loader entry id: ui-matrix-theme`. Such profiles already have the theme; this plugin targets custom browser-surface rosters and web-app versions that predate the theme.
 - The browser half resolves its platform peers (`react`, the `@deepseek-ai/dsh-client-*` module table) from the host profile's own client stack; this repository bundles only the theme's own code.
 
