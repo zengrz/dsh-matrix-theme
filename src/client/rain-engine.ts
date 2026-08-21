@@ -21,7 +21,15 @@
  * draws only the column wall. The engine owns the rAF lifetime, the cursor
  * listener, and the per-resize rebuild; the component owns construction,
  * activation, resize forwarding, and disposal.
+ *
+ * Performance: the constructor takes the user's rain quality level. 'full'
+ * is the faithful effect; 'lite' halves the column and row density (a
+ * quarter of the glyph draws), drops the per-glyph churn and the cursor
+ * spotlight, and culls columns faded below a near-invisible alpha. The
+ * cheap signature effects — the 3D tilt and the marching white cell — stay
+ * in every level.
  */
+import type { RainQuality } from './rain-quality.ts'
 const FONT_SIZE = 20
 /** Marked (spotlighted/selected) glyphs draw white at this smaller size. */
 const MARKED_FONT_SIZE = 15
@@ -49,6 +57,33 @@ const GREEN = 'rgba(0, 255, 0, '
 const WHITE = 'rgba(255, 255, 255, '
 /** Background fill: the reference's opaque black page. */
 const BACKGROUND = '#000'
+
+/**
+ * Render-effort knobs derived from the rain quality level: grid density,
+ * per-glyph extras (churn/spotlight), and depth culling.
+ */
+interface QualityKnobs {
+  /** Grid cells per column stride (2 = half the columns). */
+  columnStride: number
+  /** Grid cells per row stride (2 = half the glyph rows). */
+  rowStride: number
+  /** Whether glyphs churn (random replacement) each frame. */
+  churn: boolean
+  /** Whether the cursor spotlight whitens nearby glyphs. */
+  spotlight: boolean
+  /** Columns faded to alpha at or below this cutoff are skipped entirely. */
+  alphaCutoff: number
+}
+
+/** The faithful reference effect (the default level). */
+const FULL_KNOBS: QualityKnobs = { columnStride: 1, rowStride: 1, churn: true, spotlight: true, alphaCutoff: 0 }
+/** The reduced-effort level: quarter-density grid, no per-cell extras. */
+const LITE_KNOBS: QualityKnobs = { columnStride: 2, rowStride: 2, churn: false, spotlight: false, alphaCutoff: 0.05 }
+/**
+ * Knobs per level. 'off' never reaches the engine (the backdrop entry gates
+ * it), but maps defensively to the lite knobs if constructed anyway.
+ */
+const KNOBS: Record<RainQuality, QualityKnobs> = { full: FULL_KNOBS, lite: LITE_KNOBS, off: LITE_KNOBS }
 
 /** Pick one glyph from the alphabet. */
 function randomGlyph(): string {
@@ -121,6 +156,8 @@ export function rotateYAxis(x: number, y: number, z: number, cx: number, angle: 
 export class RainEngine {
   private readonly canvas: HTMLCanvasElement
   private readonly ctx: CanvasRenderingContext2D | null
+  /** Render-effort knobs for the active quality level. */
+  private readonly knobs: QualityKnobs
   /** Per-column state, rebuilt on every resize (the reference's semantics). */
   private columns: RainColumn[] = []
   private frame: number | null = null
@@ -134,10 +171,12 @@ export class RainEngine {
   /**
    * @param canvas - the backdrop canvas; a null 2D context (jsdom without the
    * canvas backend) leaves the engine inert rather than throwing.
+   * @param quality - the rain quality level driving the render-effort knobs.
    */
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, quality: RainQuality = 'full') {
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')
+    this.knobs = KNOBS[quality]
   }
 
   /** Start the animation loop and the cursor listener; a second start while running is a no-op. */
@@ -183,11 +222,12 @@ export class RainEngine {
       this.cursorY = height / 2
       this.cursorSet = true
     }
-    const columns = new Array<RainColumn>(Math.floor(width / FONT_SIZE))
-    const rows = Math.floor(height / FONT_SIZE)
+    const stride = this.knobs.columnStride
+    const columns = new Array<RainColumn>(Math.floor(width / (FONT_SIZE * stride)))
+    const rows = Math.floor(height / (FONT_SIZE * this.knobs.rowStride))
     for (let i = 0; i < columns.length; i += 1) {
       columns[i] = {
-        x: i * FONT_SIZE,
+        x: i * FONT_SIZE * stride,
         y: height / 2,
         z: -DELTA_Z + 2 * DELTA_Z * Math.random(),
         glyphs: Array.from({ length: rows }, randomGlyph).join(''),
@@ -218,17 +258,23 @@ export class RainEngine {
     const cy = height / 2
     const thetaX = AMPLITUDE * this.cursorDy * Math.PI * 2
     const thetaY = AMPLITUDE * this.cursorDx * Math.PI * 2
+    const { churn, spotlight, alphaCutoff, rowStride } = this.knobs
     for (const column of this.columns) {
       ;[column.x, column.y, column.z] = rotateXAxis(column.x, column.y, column.z, cy, thetaX)
       ;[column.x, column.y, column.z] = rotateYAxis(column.x, column.y, column.z, cx, thetaY)
       const alpha = depthAlpha(column.z)
+      // Depth culling: skip columns faded below the cutoff ('lite' skips
+      // near-invisible ones; the cutoff is 0 at 'full', so alpha never trips it).
+      if (alpha < alphaCutoff) continue
       for (let step = 0; step < column.glyphs.length; step += 1) {
-        if (Math.random() > CHURN_PROBABILITY) {
+        if (churn && Math.random() > CHURN_PROBABILITY) {
           column.glyphs = column.glyphs.slice(0, step) + randomGlyph() + column.glyphs.slice(step + 1)
         }
         const x = column.x
-        const y = column.y + step * FONT_SIZE - cy
-        const marked = Math.hypot(this.cursorX - x, this.cursorY - y) < SPOTLIGHT_RADIUS || column.selected === step
+        const y = column.y + step * FONT_SIZE * rowStride - cy
+        const marked = spotlight
+          ? Math.hypot(this.cursorX - x, this.cursorY - y) < SPOTLIGHT_RADIUS || column.selected === step
+          : column.selected === step
         ctx.fillStyle = marked ? `${WHITE}${alpha})` : `${GREEN}${alpha})`
         ctx.font = marked ? `${MARKED_FONT_SIZE}px serif` : DEFAULT_FONT
         ctx.fillText(column.glyphs.charAt(step), x, y)

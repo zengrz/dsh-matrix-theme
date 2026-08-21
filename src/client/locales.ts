@@ -5,6 +5,10 @@ export const zh = {
   'matrix.title': '矩阵主题',
   'matrix.on': '已开启',
   'matrix.off': '已关闭',
+  'matrix.quality.title': '数字雨特效',
+  'matrix.quality.full': '完整',
+  'matrix.quality.lite': '轻量',
+  'matrix.quality.off': '关闭',
 } satisfies Record<string, string>
 
 /** The matrix namespace key union. */
@@ -15,4 +19,8 @@ export const en = {
   'matrix.title': 'Matrix theme',
   'matrix.on': 'On',
   'matrix.off': 'Off',
+  'matrix.quality.title': 'Rain effects',
+  'matrix.quality.full': 'Full',
+  'matrix.quality.lite': 'Lite',
+  'matrix.quality.off': 'Off',
 } satisfies Record<MatrixKey, string>

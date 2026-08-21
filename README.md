@@ -1,6 +1,6 @@
 # dsh-matrix-theme
 
-The Matrix movie theme for the [dsh](https://github.com/deepseek-ai/deepseek-harness) web GUI as an installable plugin: the selectable `matrix` theme (green-on-black palette over the dark base), a digital-rain ambient backdrop (a faithful port of the [zengrz.github.io](https://github.com/zengrz/zengrz.github.io) glyph wall), and its General-settings toggle row. One package carries both roles: the `dsh.bundle` patch layer (`cordis.patch.yml` inserts the `ui-matrix-theme` browser roster row) and the `dsh.client` plugin itself (`lib/client.js`, prebuilt and committed — no build step runs at install time).
+The Matrix movie theme for the [dsh](https://github.com/deepseek-ai/deepseek-harness) web GUI as an installable plugin: the selectable `matrix` theme (green-on-black palette over the dark base), a digital-rain ambient backdrop (a faithful port of the [zengrz.github.io](https://github.com/zengrz/zengrz.github.io) glyph wall), its General-settings toggle row, and a rain-quality row that trades backdrop effects for performance on slower machines. One package carries both roles: the `dsh.bundle` patch layer (`cordis.patch.yml` inserts the `ui-matrix-theme` browser roster row) and the `dsh.client` plugin itself (`lib/client.js`, prebuilt and committed — no build step runs at install time).
 
 ## Install
 
@@ -22,9 +22,19 @@ No build permission (`allowBuilds`) is needed: the published entry points are co
 - The patch **appends and does not dedupe**: adding this plugin to a profile whose layers already register `ui-matrix-theme` — the stock `dsh-web-app` bundle ships the theme in-box from the same release — fails the load with `duplicate loader entry id: ui-matrix-theme`. Such profiles already have the theme; this plugin targets custom browser-surface rosters and web-app versions that predate the theme.
 - The browser half resolves its platform peers (`react`, the `@deepseek-ai/dsh-client-*` module table) from the host profile's own client stack; this repository bundles only the theme's own code.
 
+## Rain quality
+
+The General section gains a **Rain effects** row (below the Matrix theme row, visible while the matrix theme is active) with three levels:
+
+- **Full** — the faithful reference effect: full-density glyph wall, per-glyph churn, cursor spotlight, and the 3D tilt.
+- **Lite** — for older or integrated-GPU machines: the column/row grid draws at half density (a quarter of the per-frame glyph draws), glyph churn and the cursor spotlight are dropped, and columns faded to near-invisible depth are culled entirely. The cheap signature effects (the 3D tilt and the marching white cell) stay.
+- **Off** — no canvas at all: the green palette stays, the rain costs nothing (same skip as `prefers-reduced-motion: reduce`).
+
+The level is a plugin-owned browser preference persisted to `localStorage` under `dsh-matrix-theme:rain-quality`; storage failures only disable persistence. Changing the level while the rain runs replaces the engine (the grid rebuilds at the new density).
+
 ## Model Experience
 
-None: the theme manages a browser-side preference and the backdrop is decorative (`aria-hidden`); nothing reaches a model request.
+None: the theme manages browser-side preferences (theme selection and rain quality) and the backdrop is decorative (`aria-hidden`); nothing reaches a model request.
 
 ## Rebuilding the artifacts
 

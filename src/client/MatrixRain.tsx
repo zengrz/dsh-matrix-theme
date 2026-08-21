@@ -10,7 +10,10 @@
  * effects; the active fact arrives through the shared mirror store.
  *
  * Under `prefers-reduced-motion: reduce` the entry renders nothing at all
- * (decorative motion is skipped entirely rather than frozen).
+ * (decorative motion is skipped entirely rather than frozen). The rain
+ * quality level from the mirror store selects the engine's effort: 'full'
+ * runs the reference effect, 'lite' the reduced-effort knobs, and 'off'
+ * renders nothing (the matrix palette stays, the rain costs nothing).
  */
 import { useEffect, useRef, useState } from 'react'
 import type { PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
@@ -30,21 +33,22 @@ export type MatrixRainProps =
 
 /**
  * Render the rain canvas under its translucent veil, or nothing while matrix
- * is inactive or motion is reduced.
+ * is inactive, motion is reduced, or the rain quality is off.
  * @param props - composed slot props.
  * @returns the backdrop element tree.
  */
 export function MatrixRain({ useStore }: MatrixRainProps) {
   const active = useStore(s => s.active)
+  const quality = useStore(s => s.quality)
   // Environment fact read once per mount (like the frame's viewport width).
   const [reduced] = useState(prefersReducedMotion)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   useEffect(() => {
-    if (!active || reduced) return
+    if (!active || reduced || quality === 'off') return
     const canvas = canvasRef.current
     /* v8 ignore next -- active renders the canvas in the same commit, so the ref is attached by effect time */
     if (canvas === null) return
-    const engine = new RainEngine(canvas)
+    const engine = new RainEngine(canvas, quality)
     engine.start()
     const onResize = (): void => { engine.resize() }
     window.addEventListener('resize', onResize)
@@ -52,8 +56,8 @@ export function MatrixRain({ useStore }: MatrixRainProps) {
       window.removeEventListener('resize', onResize)
       engine.dispose()
     }
-  }, [active, reduced])
-  if (!active || reduced) return null
+  }, [active, reduced, quality])
+  if (!active || reduced || quality === 'off') return null
   return (
     <div className={css.layer}>
       <canvas ref={canvasRef} className={css.canvas} aria-hidden="true" />
