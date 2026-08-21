@@ -51,3 +51,49 @@
 .toggle:hover {
   background: var(--dsw-alias-interactive-bg-hover);
 }
+
+/* Opacity slider row: shown only while the theme is on. */
+.opacityRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.opacityLabel {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+}
+
+/* Range slider: green track on a dark base. */
+.slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--dsw-alias-border-l3);
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--dsw-alias-brand-primary);
+  border: none;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--dsw-alias-brand-primary);
+  border: none;
+  cursor: pointer;
+}

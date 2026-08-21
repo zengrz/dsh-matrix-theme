@@ -5,9 +5,10 @@
  * never paints over content; a translucent veil stacked above the canvas
  * inside this entry is the layer between the app content and the glyphs,
  * dimming the rain wherever the theme's surfaces are translucent or
- * transparent. The entry owns nothing but the canvas and the RainEngine
- * lifetime — activation, resize forwarding, and disposal ride the component
- * effects; the active fact arrives through the shared mirror store.
+ * transparent. The veil opacity is user-controlled via the store slider.
+ * The entry owns nothing but the canvas and the RainEngine lifetime —
+ * activation, resize forwarding, and disposal ride the component effects;
+ * the active fact arrives through the shared mirror store.
  *
  * Under `prefers-reduced-motion: reduce` the entry renders nothing at all
  * (decorative motion is skipped entirely rather than frozen). The rain
@@ -33,13 +34,15 @@ export type MatrixRainProps =
 
 /**
  * Render the rain canvas under its translucent veil, or nothing while matrix
- * is inactive, motion is reduced, or the rain quality is off.
+ * is inactive, motion is reduced, or the rain quality is off. The veil
+ * opacity follows the store.
  * @param props - composed slot props.
  * @returns the backdrop element tree.
  */
 export function MatrixRain({ useStore }: MatrixRainProps) {
   const active = useStore(s => s.active)
   const quality = useStore(s => s.quality)
+  const opacity = useStore(s => s.opacity)
   // Environment fact read once per mount (like the frame's viewport width).
   const [reduced] = useState(prefersReducedMotion)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -62,8 +65,13 @@ export function MatrixRain({ useStore }: MatrixRainProps) {
     <div className={css.layer}>
       <canvas ref={canvasRef} className={css.canvas} aria-hidden="true" />
       {/* The translucent layer between the app content (above) and the rain
-          glyphs (below): it dims the backdrop without touching the content. */}
-      <div className={css.veil} aria-hidden="true" />
+          glyphs (below): it dims the backdrop without touching the content.
+          The opacity is user-controlled via the store slider. */}
+      <div
+        className={css.veil}
+        aria-hidden="true"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${opacity})` }}
+      />
     </div>
   )
 }

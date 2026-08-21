@@ -1,4 +1,4 @@
-/** `matrix` namespace dictionaries (the Matrix toggle row's copy). */
+/** `matrix` namespace dictionaries (the Matrix toggle, rain quality, and opacity rows' copy). */
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
@@ -9,6 +9,7 @@ export const zh = {
   'matrix.quality.full': '完整',
   'matrix.quality.lite': '轻量',
   'matrix.quality.off': '关闭',
+  'matrix.opacity': '雨幕透明度',
 } satisfies Record<string, string>
 
 /** The matrix namespace key union. */
@@ -23,4 +24,5 @@ export const en = {
   'matrix.quality.full': 'Full',
   'matrix.quality.lite': 'Lite',
   'matrix.quality.off': 'Off',
+  'matrix.opacity': 'Rain opacity',
 } satisfies Record<MatrixKey, string>

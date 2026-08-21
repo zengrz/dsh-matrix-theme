@@ -7,8 +7,9 @@
  * is the apply-world `theme/change` listener; the toggle's inject face
  * routes preference writes back through `ctx.theme.setTheme`, remembering
  * the preference it replaced so switching off restores it, and the quality
- * row's inject face writes the rain quality level and persists it. The theme
- * registration and every subscription ride the plugin fiber (HMR safety).
+ * and opacity rows' inject faces write their store fields (which persist
+ * themselves) and notify the DOM fallback path. The theme registration and
+ * every subscription ride the plugin fiber (HMR safety).
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
@@ -21,13 +22,14 @@ import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import { MATRIX_THEME, THEME_ID } from './matrix-tokens.ts'
-import { loadRainQuality, saveRainQuality } from './rain-quality.ts'
+import { loadRainQuality } from './rain-quality.ts'
 import { createMatrixThemeStore } from './store.ts'
 import type { MatrixRowInjected } from './MatrixRow.tsx'
 import { MatrixRow } from './MatrixRow.tsx'
 import type { MatrixQualityRowInjected } from './MatrixQualityRow.tsx'
 import { MatrixQualityRow } from './MatrixQualityRow.tsx'
 import { MatrixRain } from './MatrixRain.tsx'
+import { mountDomBackdrop, notifyOpacityChange, notifyQualityChange } from './dom-backdrop.ts'
 import { en, zh, type MatrixKey } from './locales.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -91,6 +93,11 @@ export function apply(ctx: ClientContext): void {
           ctx.theme.setTheme(restoreTo ?? 'system')
         }
       },
+      setOpacity: (opacity) => {
+        actions.setOpacity(opacity)
+        // Notify the DOM fallback (non-React path) to update its veil.
+        notifyOpacityChange()
+      },
     }
   }
 
@@ -106,7 +113,8 @@ export function apply(ctx: ClientContext): void {
     return {
       setQuality: (quality) => {
         actions.setQuality(quality)
-        saveRainQuality(quality)
+        // Notify the DOM fallback (non-React path) to rebuild its engine.
+        notifyQualityChange()
       },
     }
   }
@@ -136,4 +144,24 @@ export function apply(ctx: ClientContext): void {
     store,
     inject: rainInject,
   }, MatrixRain))
+
+  // Fallback for harnesses that predate the `shell.backdrop` slot: the inject
+  // above is a deferred wait that never fires when the slot is undeclared, so
+  // the rain is silently dropped. After synchronous boot settles (setTimeout
+  // 0), check whether the slot was declared; if not, mount a fixed canvas
+  // behind the app root driving the same RainEngine. The effect's disposer
+  // cleans up the timer, the fallback layer, and the engine on plugin unload.
+  ctx.effect(() => {
+    let disposed = false
+    let fallbackDispose: (() => void) | undefined
+    const timer = setTimeout(() => {
+      if (disposed || ctx.slots.spec('shell.backdrop') !== undefined) return
+      fallbackDispose = mountDomBackdrop(ctx)
+    }, 0)
+    return () => {
+      disposed = true
+      clearTimeout(timer)
+      fallbackDispose?.()
+    }
+  }, 'ui-matrix-theme: dom fallback backdrop')
 }
