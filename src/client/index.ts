@@ -24,6 +24,7 @@ import { createMatrixThemeStore } from './store.ts'
 import type { MatrixRowInjected } from './MatrixRow.tsx'
 import { MatrixRow } from './MatrixRow.tsx'
 import { MatrixRain } from './MatrixRain.tsx'
+import { mountDomBackdrop } from './dom-backdrop.ts'
 import { en, zh, type MatrixKey } from './locales.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -112,4 +113,24 @@ export function apply(ctx: ClientContext): void {
     store,
     inject: rainInject,
   }, MatrixRain))
+
+  // Fallback for harnesses that predate the `shell.backdrop` slot: the inject
+  // above is a deferred wait that never fires when the slot is undeclared, so
+  // the rain is silently dropped. After synchronous boot settles (setTimeout
+  // 0), check whether the slot was declared; if not, mount a fixed canvas
+  // behind the app root driving the same RainEngine. The effect's disposer
+  // cleans up the timer, the fallback layer, and the engine on plugin unload.
+  ctx.effect(() => {
+    let disposed = false
+    let fallbackDispose: (() => void) | undefined
+    const timer = setTimeout(() => {
+      if (disposed || ctx.slots.spec('shell.backdrop') !== undefined) return
+      fallbackDispose = mountDomBackdrop(ctx)
+    }, 0)
+    return () => {
+      disposed = true
+      clearTimeout(timer)
+      fallbackDispose?.()
+    }
+  }, 'ui-matrix-theme: dom fallback backdrop')
 }
